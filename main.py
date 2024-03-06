@@ -3,9 +3,11 @@ import requests as req
 from urllib.parse import urljoin
 import json
 import threading
+from datetime import datetime
 
 links = json.loads(open("config.json").read())["links"]
 
+start = datetime.now()
 
 out = """%%%\n"""
 
@@ -20,29 +22,32 @@ def get_hrefs(url: str) -> list:
     ]
 
 
-def href_to_html(url) -> str:
-    return BeautifulSoup(req.get(url).text, "html.parser").get_text()
+def get_link(link):
+    hrefs = get_hrefs(link)
+    print(f"Found {len(hrefs)} links")
+    threads = []
+    for href in hrefs:
+        thread = threading.Thread(target=get_text_from_href, args=(href,))
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
 
 
-llen = len(links)
-lcount = 1
+def get_text_from_href(href):
+    global out
+    out += f"{BeautifulSoup(req.get(href).text, 'html.parser').get_text()}\n%%%"
+    print(f"thread done!")
+    return
+
 
 for link in links:
-    print(f"Scraping: {link}")
-    hrefs = get_hrefs(link)
-
-    hlen = len(hrefs)
-    hcount = 1
-
-    for href in hrefs:
-        print(f"{hcount}/{hlen}")
-        out += f"{(href_to_html(href))}\n%%%"
-        hcount += 1
-
-    lcount += 1
-
-    with open(f"Files/link-{lcount}.txt", "w", encoding="utf-8") as file:
+    get_link(link)
+    with open("output.txt", "w", encoding="utf-8") as file:
         file.write(out)
+    out = ""
 
-print("Finished")
-input()
+end = datetime.now()
+
+delt = end - start
+print(f"Finished in {delt.seconds} seconds!")
