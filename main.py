@@ -22,8 +22,8 @@ def get_hrefs(url: str) -> list:
     ]
 
 
-def get_link(link):
-    hrefs = get_hrefs(link)
+def get_link(link_):
+    hrefs = get_hrefs(link_)
     print(f"Found {len(hrefs)} links")
     threads = []
     for href in hrefs:
@@ -35,17 +35,14 @@ def get_link(link):
 
 
 def get_text_from_href(href):
-    global out
-    out += f"{BeautifulSoup(req.get(href).text, 'html.parser').get_text()}\n%%%"
-    print(f"thread done!")
+    with open("output.html", "a", encoding="utf-8") as file_:
+        file_.write(f"{BeautifulSoup(req.get(href).content, 'html.parser').find('body')}\n\n\n%%%\n\n\n")
+    print(f"Parsed: {href}")
     return
 
 
 for link in links:
     get_link(link)
-    with open("output.txt", "w", encoding="utf-8") as file:
-        file.write(out)
-    out = ""
 
 end = datetime.now()
 
